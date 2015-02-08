@@ -13,6 +13,7 @@
 #ifndef SHORTCUTHELPER_HPP
 #define SHORTCUTHELPER_HPP
 
+#include "definitions.hpp"
 #include <QString>
 
 class ShortcutHelper
@@ -20,9 +21,15 @@ class ShortcutHelper
     public:
         ShortcutHelper();
         bool ValidateShortcut(QString key);
-        QString keys;
+        void RegisterKeys(QString key);
+        QString GetKeys()
+        {
+            return this->keys;
+        }
         QString file;
-        //bool repeat;
+    private:
+        QString keys;
+        bool loop;
 };
 
 #endif // SHORTCUTHELPER_HPP

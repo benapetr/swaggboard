@@ -13,6 +13,8 @@
 #include "mainwindow.hpp"
 #include <QApplication>
 
+#include "definitions.hpp"
+
 int main(int argc, char *argv[])
 {
     QApplication::setOrganizationName("petrbena");

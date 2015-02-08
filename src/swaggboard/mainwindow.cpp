@@ -97,18 +97,18 @@ void MainWindow::Load(QString path)
     {
         QDomElement e = list.at(item++).toElement();
         ShortcutHelper *helper = new ShortcutHelper();
-        helper->keys = e.attribute("shortcut");
+        helper->RegisterKeys(e.attribute("shortcut"));
         helper->file = e.attribute("fp");
         this->SL.append(helper);
         int id = this->ui->tableWidget->rowCount();
         this->ui->tableWidget->insertRow(id);
-        QTableWidgetItem *keys = new QTableWidgetItem(helper->keys);
+        QTableWidgetItem *keys = new QTableWidgetItem("No");
         keys->setFlags(keys->flags() ^Qt::ItemIsEditable);
-        this->ui->tableWidget->setItem(id, 0, keys);
+        this->ui->tableWidget->setItem(id, 0, new QTableWidgetItem(helper->GetKeys()));
         MusicFinder *x = new MusicFinder(this);
         this->Finders.append(x);
         this->ui->tableWidget->setCellWidget(id, 1, x);
-        this->ui->tableWidget->setItem(id, 2, new QTableWidgetItem("No"));
+        this->ui->tableWidget->setItem(id, 2, keys);
         x->SetFile(helper->file);
         this->ui->tableWidget->resizeRowsToContents();
     }
@@ -154,7 +154,7 @@ void MainWindow::Save()
     foreach (ShortcutHelper *xx, this->SL)
     {
         writer->writeStartElement("item");
-        writer->writeAttribute("shortcut", xx->keys);
+        writer->writeAttribute("shortcut", xx->GetKeys());
         writer->writeAttribute("fp", xx->file);
         writer->writeEndElement();
     }
@@ -183,13 +183,13 @@ void MainWindow::on_actionAdd_shortcut_triggered()
 {
     int id = this->ui->tableWidget->rowCount();
     this->ui->tableWidget->insertRow(id);
-    QTableWidgetItem *keys = new QTableWidgetItem("None");
+    QTableWidgetItem *keys = new QTableWidgetItem("No");
     keys->setFlags(keys->flags() ^Qt::ItemIsEditable);
-    this->ui->tableWidget->setItem(id, 0, keys);
+    this->ui->tableWidget->setItem(id, 0, new QTableWidgetItem("None"));
     MusicFinder *x = new MusicFinder(this);
     this->Finders.append(x);
     this->ui->tableWidget->setCellWidget(id, 1, x);
-    this->ui->tableWidget->setItem(id, 2, new QTableWidgetItem("No"));
+    this->ui->tableWidget->setItem(id, 2, keys);
     this->ui->tableWidget->resizeRowsToContents();
     this->SL.append(new ShortcutHelper());
 }
@@ -234,4 +234,13 @@ void MainWindow::on_actionLoad_triggered()
         return;
 
     this->Load(f.at(0));
+}
+
+void MainWindow::on_tableWidget_cellChanged(int row, int column)
+{
+    if (column != 0)
+        return;
+    if (this->SL.count() <= row)
+        return;
+    this->SL.at(row)->RegisterKeys(this->ui->tableWidget->item(row, column)->text());
 }

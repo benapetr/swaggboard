@@ -26,3 +26,8 @@ bool ShortcutHelper::ValidateShortcut(QString key)
     QStringList items = key.split("+");
     return true;
 }
+
+void ShortcutHelper::RegisterKeys(QString key)
+{
+    this->keys = key;
+}

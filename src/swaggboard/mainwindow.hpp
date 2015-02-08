@@ -47,12 +47,10 @@ class MainWindow : public QMainWindow
         void on_actionAdd_shortcut_triggered();
         void on_actionRemove_shortcut_triggered();
         void on_actionPlay_triggered();
-
         void on_actionStop_playing_triggered();
-
         void on_actionSave_triggered();
-
         void on_actionLoad_triggered();
+        void on_tableWidget_cellChanged(int row, int column);
 
     private:
         QList<MusicFinder*> Finders;
