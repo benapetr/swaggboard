@@ -14,19 +14,40 @@
 #include <QDialog>
 #include <QList>
 #include "definitions.hpp"
-#include <QAudioDeviceInfo>
+
+#ifdef WIN
+#include <windows.h>
+#include <mmdeviceapi.h>
+#include <audioclient.h>
+#endif
 
 namespace Ui
 {
     class Options;
 }
 
+class OutputDevice
+{
+    public:
+        OutputDevice();
+        ~OutputDevice();
+        QString Name;
+#ifdef WIN
+        LPGUID GUID;
+        LPWSTR ID;
+        IMMDevice *pDevice;
+        IAudioClient *Client;
+#endif
+};
+
 class Options : public QDialog
 {
         Q_OBJECT
     public:
+        static void Initialize();
+        static void OpenDevice(int device);
 #if QT_VERSION >= 0x050000
-        static QList<QAudioDeviceInfo> devices;
+        static QList<OutputDevice*> devices;
 #endif
         static int PreferredDevice;
         explicit Options(QWidget *parent = 0);

@@ -10,12 +10,8 @@
 
 // Copyright (c) Petr Bena 2015
 
-#include "mainwindow.hpp"
-#include "ui_mainwindow.h"
-#include "shortcuthelper.hpp"
-#include "information.hpp"
-#include "musicfinder.hpp"
-#include "options.hpp"
+#include <QDesktopServices>
+#include "definitions.hpp"
 #include <QDir>
 #include <QtXml>
 #include <QFileDialog>
@@ -24,18 +20,19 @@
 #include <QFile>
 #if QT_VERSION >= 0x050000
 #include <QMediaPlayer>
+#include <QMediaService>
+#include <QAudioOutputSelectorControl>
 static QMediaPlayer *player = NULL;
 #else
 #include <phonon/mediaobject.h>
-
-
 static Phonon::MediaObject *mp3 = NULL;
-
-
 #endif
-#include <QDesktopServices>
-#include "definitions.hpp"
-
+#include "mainwindow.hpp"
+#include "ui_mainwindow.h"
+#include "shortcuthelper.hpp"
+#include "information.hpp"
+#include "musicfinder.hpp"
+#include "options.hpp"
 #ifdef WIN
     #include <windows.h>
 #endif
@@ -186,6 +183,12 @@ void MainWindow::PlaySound(QString path)
         return;
 #if QT_VERSION >= 0x050000
     player = new QMediaPlayer();
+    //QMediaService *svc = player->service();
+    //QAudioOutputSelectorControl *out = qobject_cast<QAudioOutputSelectorControl *> (svc->requestControl(QAudioOutputSelectorControl_iid));
+    //out->setActiveOutput(this->ui->comboBox->currentText());
+    //QStringList items = out->availableOutputs();
+   
+    //svc->releaseControl(out);
     player->setVolume(this->ui->horizontalSlider->value());
     player->setMedia(QUrl::fromLocalFile(path));
     player->play();

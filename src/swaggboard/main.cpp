@@ -10,16 +10,18 @@
 
 // Copyright (c) Petr Bena 2015
 
-#include "mainwindow.hpp"
 #include <QApplication>
-#include "definitions.hpp"
 #include <QSettings>
+#include "mainwindow.hpp"
+#include "definitions.hpp"
+#include "shortcuthelper.hpp"
 #include "options.hpp"
 
-#ifdef WIN
-#include <windows.h>
-#include "shortcuthelper.hpp"
+#ifdef _MSC_VER
+#    pragma comment(linker, "/subsystem:windows /ENTRY:mainCRTStartup")
+#endif
 
+#ifdef WIN
 #ifdef PlaySound
     #undef PlaySound
 #endif
@@ -32,8 +34,10 @@ int winmain(int argc, char *argv[])
 
     QApplication::processEvents();
 
+    Options::Initialize();
     QSettings s;
     Options::PreferredDevice = s.value("device", -1).toInt();
+    Options::OpenDevice(Options::PreferredDevice);
 
     MSG msg;
     while(GetMessage(&msg,NULL,0,0))

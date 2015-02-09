@@ -29,3 +29,5 @@ FORMS    += mainwindow.ui \
     musicfinder.ui \
     information.ui \
     options.ui
+
+LIBS += -ldsound -lole32
