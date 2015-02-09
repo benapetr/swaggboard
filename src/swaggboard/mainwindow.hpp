@@ -41,6 +41,7 @@ class MainWindow : public QMainWindow
         void Make(int type);
         void PlaySound(QString path);
         void Save();
+        void Volume(int volume);
         QString GetConfig();
         QString File;
         bool changed;

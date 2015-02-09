@@ -40,6 +40,7 @@ static Phonon::MediaObject *mp3 = NULL;
 static IGraphBuilder *pGraph = NULL;
 static IMediaControl *pControl = NULL;
 static IMediaEvent   *pEvent = NULL;
+static IBasicAudio   *pOutput = NULL;
 #endif
 
 #ifdef PlaySound
@@ -156,6 +157,11 @@ void MainWindow::Stop()
         pControl->Release();
         pControl = NULL;
     }
+    if (pOutput)
+    {
+        pOutput->Release();
+        pOutput = NULL;
+    }
     if (pGraph)
     {
         pGraph->Release();
@@ -264,6 +270,21 @@ static IBaseFilter *SetOutput()
 
 #endif
 
+void MainWindow::Volume(int volume)
+{
+#ifdef WIN
+    if (pOutput)
+    {
+        if (volume > 100)
+            volume = 100;
+        else if (volume < 0)
+            volume = 0;
+        long vol = (100 - volume) * -100;
+        pOutput->put_Volume(vol);
+    }
+#endif
+}
+
 void MainWindow::PlaySound(QString path)
 {
     this->Stop();
@@ -301,6 +322,16 @@ void MainWindow::PlaySound(QString path)
         Error("ERROR - Could not create the Filter Graph Manager.");
         return;
     }
+
+    hr = pGraph->QueryInterface(IID_IBasicAudio, (void**)&pOutput);
+
+    if (FAILED(hr))
+    {
+        Error("ERROR - Could not create the IBasicAudio.");
+        return;
+    }
+
+    this->Volume(this->ui->horizontalSlider->value());
 
     pGraph->AddFilter(f, L"device");
     hr = pGraph->QueryInterface(__uuidof(IMediaControl), (void **)&pControl);
@@ -440,6 +471,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::on_horizontalSlider_sliderMoved(int position)
 {
+    this->Volume(position);
     if (player)
         player->setVolume(position);
     this->ui->horizontalSlider->setToolTip("VOLUME IS " + QString::number(position) + "% RIGHT NOW");
