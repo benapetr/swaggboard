@@ -16,9 +16,9 @@
 #include "definitions.hpp"
 
 #ifdef WIN
+//#include <mmdeviceapi.h>
 #include <windows.h>
-#include <mmdeviceapi.h>
-#include <audioclient.h>
+//#include <audioclient.h>
 #endif
 
 namespace Ui
@@ -26,18 +26,14 @@ namespace Ui
     class Options;
 }
 
+struct IMMDevice;
+
 class OutputDevice
 {
     public:
         OutputDevice();
         ~OutputDevice();
         QString Name;
-#ifdef WIN
-        LPGUID GUID;
-        LPWSTR ID;
-        IMMDevice *pDevice;
-        IAudioClient *Client;
-#endif
 };
 
 class Options : public QDialog
@@ -45,9 +41,8 @@ class Options : public QDialog
         Q_OBJECT
     public:
         static void Initialize();
-        static void OpenDevice(int device);
 #if QT_VERSION >= 0x050000
-        static QList<OutputDevice*> devices;
+        static QList<OutputDevice> devices;
 #endif
         static int PreferredDevice;
         explicit Options(QWidget *parent = 0);

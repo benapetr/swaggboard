@@ -34,7 +34,12 @@ static Phonon::MediaObject *mp3 = NULL;
 #include "musicfinder.hpp"
 #include "options.hpp"
 #ifdef WIN
+    #include <dshow.h>
     #include <windows.h>
+
+static IGraphBuilder *pGraph = NULL;
+static IMediaControl *pControl = NULL;
+static IMediaEvent   *pEvent = NULL;
 #endif
 
 #ifdef PlaySound
@@ -140,6 +145,25 @@ void MainWindow::Load(QString path)
 
 void MainWindow::Stop()
 {
+#ifdef WIN
+    if (pEvent)
+    {
+        pEvent->Release();
+        pEvent = NULL;
+    }
+    if (pControl)
+    {
+        pControl->Release();
+        pControl = NULL;
+    }
+    if (pGraph)
+    {
+        pGraph->Release();
+        pGraph = NULL;
+        CoUninitialize();
+    }
+    return;
+#endif
 #if QT_VERSION >= 0x050000
     if (player)
     {
@@ -176,22 +200,119 @@ void MainWindow::Make(int type)
         x->Stop();
 }
 
+static void Error(QString reason)
+{
+    QMessageBox mb;
+    mb.setWindowTitle("Failed");
+    mb.setText(reason);
+    mb.exec();
+}
+
+#ifdef WIN
+
+static IBaseFilter *SetOutput()
+{
+    if (Options::PreferredDevice == -1)
+        return NULL;
+    HRESULT hr;
+    ICreateDevEnum *pSysDevEnum = NULL;
+    hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void **)&pSysDevEnum);
+    if (FAILED(hr))
+    {
+        return NULL;
+    }
+
+    IEnumMoniker *pEnumCat = NULL;
+    hr = pSysDevEnum->CreateClassEnumerator(CLSID_AudioRendererCategory, &pEnumCat, 0);
+    IBaseFilter *pFilter = NULL;
+    if (hr == S_OK)
+    {
+        // Enumerate the monikers.
+        IMoniker *pMoniker = NULL;
+        ULONG cFetched;
+        int id;
+        int i = 0;
+        while (pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK)
+        {
+            if (i++ != Options::PreferredDevice)
+                continue;
+            IPropertyBag *pPropBag;
+            hr = pMoniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&pPropBag);
+            if (SUCCEEDED(hr))
+            {
+                // To retrieve the filter's friendly name, do the following:
+                VARIANT varName;
+                VariantInit(&varName);
+                hr = pPropBag->Read(L"FriendlyName", &varName, 0);
+                if (SUCCEEDED(hr))
+                {
+                    // Display the name in your UI somehow.
+                }
+                VariantClear(&varName);
+                hr = pMoniker->BindToObject(NULL, NULL, IID_IBaseFilter, (void**)&pFilter);
+                // Now add the filter to the graph. 
+                //Remember to release pFilter later.
+                pPropBag->Release();
+            }
+            pMoniker->Release();
+        }
+        pEnumCat->Release();
+    }
+    pSysDevEnum->Release();
+    return pFilter;
+}
+
+#endif
+
 void MainWindow::PlaySound(QString path)
 {
     this->Stop();
     if (path == "stop")
         return;
 #if QT_VERSION >= 0x050000
-    player = new QMediaPlayer();
+    //player = new QMediaPlayer();
     //QMediaService *svc = player->service();
     //QAudioOutputSelectorControl *out = qobject_cast<QAudioOutputSelectorControl *> (svc->requestControl(QAudioOutputSelectorControl_iid));
     //out->setActiveOutput(this->ui->comboBox->currentText());
     //QStringList items = out->availableOutputs();
    
     //svc->releaseControl(out);
-    player->setVolume(this->ui->horizontalSlider->value());
-    player->setMedia(QUrl::fromLocalFile(path));
-    player->play();
+    //player->setVolume(this->ui->horizontalSlider->value());
+    //player->setMedia(QUrl::fromLocalFile(path));
+    //player->play();
+    wchar_t *file_path = new wchar_t[path.length() + 1];
+    path.toWCharArray(file_path);
+    file_path[path.length()] = '\0';
+
+    // Initialize the COM library.
+    HRESULT hr = ::CoInitialize(NULL);
+    if (FAILED(hr))
+    {
+        Error("ERROR - Could not initialize COM library");
+        return;
+    }
+
+    IBaseFilter *f = SetOutput();
+
+    // Create the filter graph manager and query for interfaces.
+    hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, __uuidof(IGraphBuilder), (void **)&pGraph);
+    if (FAILED(hr))
+    {
+        Error("ERROR - Could not create the Filter Graph Manager.");
+        return;
+    }
+
+    pGraph->AddFilter(f, L"device");
+    hr = pGraph->QueryInterface(__uuidof(IMediaControl), (void **)&pControl);
+    hr = pGraph->QueryInterface(__uuidof(IMediaEvent), (void **)&pEvent);
+
+    // Build the graph.
+    hr = pGraph->RenderFile(file_path, NULL);
+    if (SUCCEEDED(hr))
+    {
+        // Run the graph.
+        hr = pControl->Run();
+    }
 #else
     mp3 = Phonon::createPlayer(Phonon::MusicCategory, Phonon::MediaSource(path));
     mp3->play();

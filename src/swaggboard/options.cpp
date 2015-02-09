@@ -11,16 +11,14 @@
 #include "ui_options.h"
 #include <QSettings>
 #include <QMessageBox>
-#include <QAudioOutput>
 #include "options.hpp"
 
 #ifdef WIN
 #include <windows.h>
-#include <dsound.h>
-#include <functiondiscoverykeys_devpkey.h>
+#include <dshow.h>
 #endif
 
-QList<OutputDevice*> Options::devices;
+QList<OutputDevice> Options::devices;
 int Options::PreferredDevice = -1;
 
 static void Error(QString reason)
@@ -50,107 +48,57 @@ static QString Ms2QString(LPWSTR lpszDesc)
     return QString::fromWCharArray(lpszDesc);
 }
 
-BOOL CALLBACK DSEnumProc(LPGUID lpGUID, LPCTSTR lpszDesc, LPCTSTR lpszDrvName, LPVOID lpContext)
-{
-  LPGUID lpTemp = NULL;
-
-  if (lpGUID != NULL)  //  NULL only for "Primary Sound Driver".
-  {
-    if ((lpTemp = (LPGUID)malloc(sizeof(GUID))) == NULL)
-    {
-        return(TRUE);
-    }
-    memcpy(lpTemp, lpGUID, sizeof(GUID));
-  }
-  OutputDevice *device = new OutputDevice();
-  device->Name = Ms2QString(lpszDesc);
-  device->GUID = lpTemp;
-  Options::devices.append(device);
-  return(TRUE);
-}
-
 #endif
-
-#define MESSAGE_ON_ERROR(code, step) if (code != S_OK) { Error("Failed to call EnumAudioEndpoints at step " + QString::number(step) + ": " + QString::number(hr)); return; }
 
 void Options::Initialize()
 {
 #ifdef WIN
-    //DirectSoundEnumerate((LPDSENUMCALLBACK)DSEnumProc, NULL);
-    const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
-    const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
-    IMMDeviceEnumerator *enumerator;
-    HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator,NULL,CLSCTX_ALL,IID_IMMDeviceEnumerator, (void**)&enumerator);
-    MESSAGE_ON_ERROR(hr, 1);
-    IMMDeviceCollection *dl;
-    hr = enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &dl);
-    MESSAGE_ON_ERROR(hr, 2);
-    unsigned int d = 0;
-    UINT device_count;
-    IPropertyStore *pProps;
-    hr = dl->GetCount(&device_count);
-    MESSAGE_ON_ERROR(hr, 3);
-    while (d < device_count)
+    HRESULT hr;
+    ICreateDevEnum *pSysDevEnum = NULL;
+    hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void **)&pSysDevEnum);
+    if (FAILED(hr))
+        return;
+
+    IEnumMoniker *pEnumCat = NULL;
+    hr = pSysDevEnum->CreateClassEnumerator(CLSID_AudioRendererCategory, &pEnumCat, 0);
+    if (hr == S_OK)
     {
-        IMMDevice *pEndpoint;
-        hr = dl->Item(d++, &pEndpoint);
-        MESSAGE_ON_ERROR(hr, 4);
-        OutputDevice *device = new OutputDevice();
-        Options::devices.append(device);
-        hr = pEndpoint->GetId(&device->ID);
-        MESSAGE_ON_ERROR(hr, 5);
-        hr = pEndpoint->OpenPropertyStore(STGM_READ, &pProps);
-        MESSAGE_ON_ERROR(hr, 6);
-        PROPVARIANT varName;
-        PropVariantInit(&varName);
-
-        // Get the endpoint's friendly-name property.
-        hr = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
-        MESSAGE_ON_ERROR(hr, 7);
-        device->Name = Ms2QString(varName.pwszVal);
-        LPWSTR pwszID = NULL;
-        hr = pEndpoint->GetId(&pwszID);
-        MESSAGE_ON_ERROR(hr, 60);
-        device->pDevice = pEndpoint;
-        device->ID = pwszID;
-        //CoTaskMemFree(pwszID);
-        PropVariantClear(&varName);
-        SAFE_RELEASE(pProps);
+        // Enumerate the monikers.
+        IMoniker *pMoniker = NULL;
+        ULONG cFetched;
+        int id;
+        while (pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK)
+        {
+            IPropertyBag *pPropBag;
+            hr = pMoniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&pPropBag);
+            if (SUCCEEDED(hr))
+            {
+                // To retrieve the filter's friendly name, do the following:
+                VARIANT varName;
+                VariantInit(&varName);
+                hr = pPropBag->Read(L"FriendlyName", &varName, 0);
+                if (SUCCEEDED(hr))
+                {
+                    OutputDevice device;
+                    device.Name = QString((QChar*)varName.bstrVal, wcslen(varName.bstrVal));
+                    Options::devices.append(device);
+                }
+                VariantClear(&varName);
+                pPropBag->Release();
+            }
+            pMoniker->Release();
+        }
+        pEnumCat->Release();
     }
-    SAFE_RELEASE(enumerator);
-    SAFE_RELEASE(dl);
-#endif
-}
-
-void Options::OpenDevice(int device)
-{
-    if (device < 0)
-        return;
-
-    if (device >= Options::devices.count())
-        return;
-
-    OutputDevice *devp = Options::devices.at(device);
-
-#ifdef WIN
-    IAudioClient *pAudioClient = NULL;
-    HRESULT hr = devp->pDevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&pAudioClient);
-    if (hr != S_OK)
-    {
-        QMessageBox m;
-        m.setWindowTitle("Error");
-        m.setText("Unable to open output device " + devp->Name + " error code " + QString::number(hr));
-        m.exec();
-        return;
-    }
+    pSysDevEnum->Release();
 #endif
 }
 
 Options::Options(QWidget *parent) : QDialog(parent), ui(new Ui::Options)
 {
     this->ui->setupUi(this);
-    foreach (OutputDevice *i, devices)
-        this->ui->comboBox->addItem(i->Name);
+    foreach (OutputDevice i, devices)
+        this->ui->comboBox->addItem(i.Name);
     QSettings s;
     this->ui->comboBox->setCurrentIndex(s.value("device", 0).toInt());
 }
@@ -170,21 +118,18 @@ void Options::on_buttonBox_accepted()
     QSettings s;
     s.setValue("device", this->ui->comboBox->currentIndex());
     this->PreferredDevice = this->ui->comboBox->currentIndex();
-    Options::OpenDevice(this->PreferredDevice);
     this->close();
 }
 
-
 OutputDevice::OutputDevice()
 {
-    this->GUID = NULL;
-    this->pDevice = NULL;
+
 }
 
 OutputDevice::~OutputDevice()
 {
-    if (this->pDevice)
-        SAFE_RELEASE(this->pDevice);
-    if (this->GUID)
-        free(this->GUID);
+    //if (this->pDevice)
+    //    SAFE_RELEASE(this->pDevice);
+    //if (this->GUID)
+    //    free(this->GUID);
 }

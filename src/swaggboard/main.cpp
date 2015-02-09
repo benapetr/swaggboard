@@ -22,6 +22,7 @@
 #endif
 
 #ifdef WIN
+#include <windows.h>
 #ifdef PlaySound
     #undef PlaySound
 #endif
@@ -37,7 +38,6 @@ int winmain(int argc, char *argv[])
     Options::Initialize();
     QSettings s;
     Options::PreferredDevice = s.value("device", -1).toInt();
-    Options::OpenDevice(Options::PreferredDevice);
 
     MSG msg;
     while(GetMessage(&msg,NULL,0,0))
