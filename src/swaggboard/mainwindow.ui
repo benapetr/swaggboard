@@ -70,6 +70,7 @@
     <addaction name="actionSave_as"/>
     <addaction name="actionLoad"/>
     <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuKEYBOARD">
@@ -148,6 +149,11 @@
   <action name="actionSave_as">
    <property name="text">
     <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
    </property>
   </action>
  </widget>

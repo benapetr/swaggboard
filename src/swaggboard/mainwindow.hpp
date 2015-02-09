@@ -58,10 +58,9 @@ class MainWindow : public QMainWindow
         void closeEvent(QCloseEvent *event);
         void on_horizontalSlider_sliderMoved(int position);
         void on_actionAdd_shortcut_to_stop_triggered();
-
         void on_actionHow_to_use_triggered();
-
         void on_actionSave_as_triggered();
+        void on_actionPreferences_triggered();
 
     private:
         QList<MusicFinder*> Finders;

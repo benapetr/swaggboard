@@ -12,8 +12,9 @@
 
 #include "mainwindow.hpp"
 #include <QApplication>
-
 #include "definitions.hpp"
+#include <QSettings>
+#include "options.hpp"
 
 #ifdef WIN
 #include <windows.h>
@@ -30,6 +31,9 @@ int winmain(int argc, char *argv[])
     w.show();
 
     QApplication::processEvents();
+
+    QSettings s;
+    Options::PreferredDevice = s.value("device", -1).toInt();
 
     MSG msg;
     while(GetMessage(&msg,NULL,0,0))

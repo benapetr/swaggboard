@@ -14,17 +14,18 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    playeritem.cpp \
     shortcuthelper.cpp \
     musicfinder.cpp \
-    information.cpp
+    information.cpp \
+    options.cpp
 
 HEADERS  += mainwindow.hpp \
-    playeritem.hpp \
     shortcuthelper.hpp \
     musicfinder.hpp \
-    information.hpp
+    information.hpp \
+    options.hpp
 
 FORMS    += mainwindow.ui \
     musicfinder.ui \
-    information.ui
+    information.ui \
+    options.ui

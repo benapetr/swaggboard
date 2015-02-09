@@ -15,6 +15,7 @@
 #include "shortcuthelper.hpp"
 #include "information.hpp"
 #include "musicfinder.hpp"
+#include "options.hpp"
 #include <QDir>
 #include <QtXml>
 #include <QFileDialog>
@@ -343,4 +344,11 @@ void MainWindow::on_actionSave_as_triggered()
     this->File = xx;
     this->Save();
     this->setWindowTitle(xx);
+}
+
+void MainWindow::on_actionPreferences_triggered()
+{
+    Options *wx = new Options();
+    wx->setAttribute(Qt::WA_DeleteOnClose);
+    wx->show();
 }
