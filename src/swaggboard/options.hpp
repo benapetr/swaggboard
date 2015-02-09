@@ -13,6 +13,7 @@
 
 #include <QDialog>
 #include <QList>
+#include <QCheckBox>
 #include "definitions.hpp"
 
 #ifdef WIN
@@ -43,10 +44,11 @@ class Options : public QDialog
         static void Initialize();
 #if QT_VERSION >= 0x050000
         static QList<OutputDevice> devices;
+        static bool nodevices;
 #endif
-        static int PreferredDevice;
         explicit Options(QWidget *parent = 0);
         ~Options();
+        QList<QCheckBox*> bl;
 
     private slots:
         void on_buttonBox_rejected();

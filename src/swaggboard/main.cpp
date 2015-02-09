@@ -11,7 +11,6 @@
 // Copyright (c) Petr Bena 2015
 
 #include <QApplication>
-#include <QSettings>
 #include "mainwindow.hpp"
 #include "definitions.hpp"
 #include "shortcuthelper.hpp"
@@ -34,10 +33,7 @@ int winmain(int argc, char *argv[])
     w.show();
 
     QApplication::processEvents();
-
     Options::Initialize();
-    QSettings s;
-    Options::PreferredDevice = s.value("device", -1).toInt();
 
     MSG msg;
     while(GetMessage(&msg,NULL,0,0))
@@ -53,8 +49,6 @@ int winmain(int argc, char *argv[])
                     w.PlaySound(s->file);
                 }
             }
-            //if (msg.wParam == 1) qDebug() << "Hot Key activated : ALT + B";
-            //if (msg.wParam == 2) qDebug() << "Hot Key activated : ALT + D";
         }
     }
     return msg.wParam;

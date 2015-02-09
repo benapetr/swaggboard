@@ -18,8 +18,8 @@
 #include <dshow.h>
 #endif
 
+bool                Options::nodevices = true;
 QList<OutputDevice> Options::devices;
-int Options::PreferredDevice = -1;
 
 static void Error(QString reason)
 {
@@ -55,6 +55,7 @@ void Options::Initialize()
 #ifdef WIN
     HRESULT hr;
     ICreateDevEnum *pSysDevEnum = NULL;
+    QSettings s;
     hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void **)&pSysDevEnum);
     if (FAILED(hr))
         return;
@@ -81,6 +82,8 @@ void Options::Initialize()
                 {
                     OutputDevice device;
                     device.Name = QString((QChar*)varName.bstrVal, wcslen(varName.bstrVal));
+                    if (s.value("d:" + device.Name, false).toBool())
+                        nodevices = false;
                     Options::devices.append(device);
                 }
                 VariantClear(&varName);
@@ -97,10 +100,28 @@ void Options::Initialize()
 Options::Options(QWidget *parent) : QDialog(parent), ui(new Ui::Options)
 {
     this->ui->setupUi(this);
-    foreach (OutputDevice i, devices)
-        this->ui->comboBox->addItem(i.Name);
+    this->ui->tableWidget->setColumnCount(2);
+    this->ui->tableWidget->horizontalHeader()->setVisible(false);
+    this->ui->tableWidget->verticalHeader()->setVisible(false);
+    this->ui->tableWidget->horizontalHeader()->setSelectionBehavior(QAbstractItemView::SelectRows);
+    this->ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    this->ui->tableWidget->setShowGrid(false);
+    this->ui->tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    this->ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    int x = 0;
     QSettings s;
-    this->ui->comboBox->setCurrentIndex(s.value("device", 0).toInt());
+    foreach (OutputDevice i, devices)
+    {
+        this->ui->tableWidget->insertRow(x);
+        this->ui->tableWidget->setItem(x, 0, new QTableWidgetItem(i.Name));
+        QCheckBox *q = new QCheckBox(this);
+        if (s.value("d:" + i.Name, false).toBool())
+            q->setChecked(true);
+        this->bl.append(q);
+        this->ui->tableWidget->setCellWidget(x++, 1, q);
+    }
+    this->ui->tableWidget->resizeColumnsToContents();
+    this->ui->tableWidget->resizeRowsToContents();
 }
 
 Options::~Options()
@@ -116,8 +137,14 @@ void Options::on_buttonBox_rejected()
 void Options::on_buttonBox_accepted()
 {
     QSettings s;
-    s.setValue("device", this->ui->comboBox->currentIndex());
-    this->PreferredDevice = this->ui->comboBox->currentIndex();
+    int item = 0;
+    while (item < this->bl.count())
+    {
+        QString name = this->ui->tableWidget->item(item, 0)->text();
+        s.setValue("d:" + name, this->bl.at(item)->isChecked());
+        item++;
+    }
+    Options::nodevices = false;
     this->close();
 }
 
