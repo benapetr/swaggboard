@@ -331,3 +331,16 @@ void MainWindow::on_actionHow_to_use_triggered()
     wx->setAttribute(Qt::WA_DeleteOnClose);
     wx->show();
 }
+
+void MainWindow::on_actionSave_as_triggered()
+{
+    QString xx = QFileDialog::getSaveFileName(this, tr("Save File"),
+                               "", tr("Xml (*.xml)"));
+
+    if (xx.isEmpty())
+        return;
+
+    this->File = xx;
+    this->Save();
+    this->setWindowTitle(xx);
+}

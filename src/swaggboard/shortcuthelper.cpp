@@ -29,36 +29,161 @@ static void Warn(QString reason)
     box.exec();
 }
 
-static UINT virtual_key(char in)
+static CHAR *                      //   return error message
+getLastErrorText(                  //   converts "Last Error" code into text
+CHAR *pBuf,                        //   message buffer
+ULONG bufSize)                     //   buffer size
 {
-    switch (in)
+     DWORD retSize;
+     LPTSTR pTemp=NULL;
+
+     if (bufSize < 16)
+     {
+          if (bufSize > 0)
+          {
+               pBuf[0]='\0';
+          }
+          return(pBuf);
+     }
+     retSize=FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|
+                           FORMAT_MESSAGE_FROM_SYSTEM|
+                           FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                           NULL,
+                           GetLastError(),
+                           LANG_NEUTRAL,
+                           (LPTSTR)&pTemp,
+                           0,
+                           NULL );
+     if (!retSize || pTemp == NULL)
+     {
+          pBuf[0]='\0';
+     }
+     else
+     {
+          sprintf(pBuf,"%0.*s (0x%x)",(int)bufSize-16,(char*)pTemp,(unsigned int)GetLastError());
+          LocalFree((HLOCAL)pTemp);
+     }
+     return (pBuf);
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731%28v=vs.85%29.aspx
+static UINT virtual_key(QString vk)
+{
+    if (vk.size() == 1)
     {
-        case '0':
-            return 0x30;
-        case '1':
-            return 0x31;
-        case '2':
-            return 0x32;
-        case '3':
-            return 0x33;
-        case '4':
-            return 0x34;
-        case '5':
-            return 0x35;
-        case '6':
-            return 0x36;
-        case '7':
-            return 0x37;
-        case '8':
-            return 0x38;
-        case '9':
-            return 0x39;
-        case 'a':
-            return 0x41;
-        case 'b':
-            return 0x42;
-        case 'c':
-            return 0x43;
+        char in = vk.at(0).toLatin1();
+        switch (in)
+        {
+            case '0':
+                return 0x30;
+            case '1':
+                return 0x31;
+            case '2':
+                return 0x32;
+            case '3':
+                return 0x33;
+            case '4':
+                return 0x34;
+            case '5':
+                return 0x35;
+            case '6':
+                return 0x36;
+            case '7':
+                return 0x37;
+            case '8':
+                return 0x38;
+            case '9':
+                return 0x39;
+            case 'a':
+                return 0x41;
+            case 'b':
+                return 0x42;
+            case 'c':
+                return 0x43;
+            case 'd':
+                return 0x44;
+            case 'e':
+                return 0x45;
+            case 'f':
+                return 0x46;
+            case 'g':
+                return 0x47;
+            case 'h':
+                return 0x48;
+            case 'i':
+                return 0x49;
+            case 'j':
+                return 0x4A;
+            case 'k':
+                return 0x4B;
+            case 'l':
+                return 0x4C;
+            case 'm':
+                return 0x4D;
+            case 'n':
+                return 0x4E;
+            case 'o':
+                return 0x4F;
+            case 'p':
+                return 0x50;
+            case 'q':
+                return 0x51;
+            case 'r':
+                return 0x52;
+            case 's':
+                return 0x53;
+            case 't':
+                return 0x54;
+            case 'u':
+                return 0x55;
+            case 'v':
+                return 0x56;
+            case 'w':
+                return 0x57;
+            case 'x':
+                return 0x58;
+            case 'y':
+                return 0x59;
+            case 'z':
+                return 0x5A;
+
+        }
+    } else if (vk == "f1")
+    {
+        return 0x70;
+    } else if (vk == "f2")
+    {
+        return 0x71;
+    } else if (vk == "f3")
+    {
+        return 0x72;
+    } else if (vk == "f4")
+    {
+        return 0x73;
+    } else if (vk == "f5")
+    {
+        return 0x74;
+    } else if (vk == "f6")
+    {
+        return 0x75;
+    } else if (vk == "f7")
+    {
+        return 0x76;
+    } else if (vk == "f8")
+    {
+        return 0x77;
+    } else if (vk == "f9")
+    {
+        return 0x78;
+    } else if (vk == "f10")
+    {
+        return 0x79;
+    } else if (vk == "f11")
+    {
+        return 0x7A;
+    } else if (vk == "f12")
+    {
+        return 0x7B;
     }
     return 0;
 }
@@ -85,7 +210,7 @@ void ShortcutHelper::Register()
     this->Parse();
     if (!this->is_valid)
     {
-        Warn("Shortcut " + this->keys + " is not a valid shortcut and will not be used");
+        Warn("Shortcut " + this->keys + " is not a valid shortcut and will not be used, example of good shortcut:\nctrl + x");
         return;
     }
 #ifdef WIN
@@ -105,7 +230,12 @@ void ShortcutHelper::Register()
         Warn(QString("Invalid virtual key: ") + this->internal_key + " shortcut for " + this->keys + " will not be registered");
         return;
     }
-    RegisterHotKey(NULL, this->id, modifiers, virtual_key(this->internal_key));
+    if (!RegisterHotKey(NULL, this->id, modifiers, virtual_key(this->internal_key)))
+    {
+        char mb[400];
+        QString error = QString(getLastErrorText(mb, 400));
+        Warn("Unable to register shortcut, system error: " + error);
+    }
     this->is_registered = true;
 #endif
 }
@@ -153,11 +283,11 @@ void ShortcutHelper::Parse()
         }
         if (this->part[x].size() > 1)
         {
-            if (this->part[x] != "ctrl" && this->part[x] != "alt" && this->part[x] != "shift")
+            if (this->part[x] != "ctrl" && this->part[x] != "win" && this->part[x] != "alt" && this->part[x] != "shift")
                 this->is_valid = false;
         } else if (this->part[x].size() == 1)
         {
-            this->internal_key = this->part[x].at(0).toLatin1();
+            this->internal_key = this->part[x];
         }
         x++;
     }

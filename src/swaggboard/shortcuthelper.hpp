@@ -36,7 +36,7 @@ class ShortcutHelper
         bool is_parsed;
         bool is_registered;
         bool is_valid;
-        char internal_key;
+        QString internal_key;
         QString keys;
         bool loop;
 };
