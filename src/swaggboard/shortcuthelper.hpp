@@ -14,20 +14,29 @@
 #define SHORTCUTHELPER_HPP
 
 #include "definitions.hpp"
-#include <QString>
+#include <QStringList>
 
 class ShortcutHelper
 {
     public:
+        static unsigned int LastID;
+
         ShortcutHelper();
+        ~ShortcutHelper();
+        void Register();
+        void Unregister();
         bool ValidateShortcut(QString key);
         void RegisterKeys(QString key);
-        QString GetKeys()
-        {
-            return this->keys;
-        }
+        QString GetKeys() {    return this->keys;    }
+        unsigned int id;
         QString file;
     private:
+        void Parse();
+        QStringList part;
+        bool is_parsed;
+        bool is_registered;
+        bool is_valid;
+        char internal_key;
         QString keys;
         bool loop;
 };

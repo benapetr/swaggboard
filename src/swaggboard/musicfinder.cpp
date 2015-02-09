@@ -11,11 +11,13 @@
 // Copyright (c) Petr Bena 2015
 
 #include "musicfinder.hpp"
+#include "shortcuthelper.hpp"
 #include "ui_musicfinder.h"
 #include <QFileDialog>
 
-MusicFinder::MusicFinder(QWidget *parent) : QFrame(parent), ui(new Ui::MusicFinder)
+MusicFinder::MusicFinder(QWidget *parent, ShortcutHelper *hx) : QFrame(parent), ui(new Ui::MusicFinder)
 {
+    this->helper = hx;
     this->ui->setupUi(this);
 }
 
@@ -28,11 +30,21 @@ void MusicFinder::SetFile(QString path)
 {
     this->ui->lineEdit->setText(path);
     this->file = path;
+    if (path == "stop")
+    {
+        this->helper->file = path;
+        this->ui->pushSelect->setEnabled(false);
+    }
 }
 
 QString MusicFinder::RetrievePath()
 {
     return this->file;
+}
+
+void MusicFinder::Stop()
+{
+    this->SetFile("stop");
 }
 
 void MusicFinder::on_pushSelect_clicked()
@@ -50,5 +62,6 @@ void MusicFinder::on_pushSelect_clicked()
         return;
 
     file = f.at(0);
+    this->helper->file = file;
     this->ui->lineEdit->setText(file);
 }

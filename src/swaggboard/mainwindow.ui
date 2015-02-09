@@ -33,6 +33,23 @@
     <item>
      <widget class="QTableWidget" name="tableWidget"/>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QSlider" name="horizontalSlider">
+        <property name="maximum">
+         <number>200</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -41,7 +58,7 @@
      <x>0</x>
      <y>0</y>
      <width>758</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -59,21 +76,20 @@
      <string>KEYBOARD</string>
     </property>
     <addaction name="actionAdd_shortcut"/>
+    <addaction name="actionAdd_shortcut_to_stop"/>
     <addaction name="actionRemove_shortcut"/>
     <addaction name="actionPlay"/>
    </widget>
+   <widget class="QMenu" name="menuHELP">
+    <property name="title">
+     <string>HELP</string>
+    </property>
+    <addaction name="actionHow_to_use"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuKEYBOARD"/>
+   <addaction name="menuHELP"/>
   </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
@@ -81,7 +97,7 @@
   </action>
   <action name="actionSave">
    <property name="text">
-    <string>Save</string>
+    <string>Save list</string>
    </property>
   </action>
   <action name="actionLoad">
@@ -91,12 +107,18 @@
   </action>
   <action name="actionAdd_shortcut">
    <property name="text">
-    <string>Add shortcut</string>
+    <string>Add shortcut for music</string>
+   </property>
+   <property name="shortcut">
+    <string>+</string>
    </property>
   </action>
   <action name="actionRemove_shortcut">
    <property name="text">
     <string>Remove shortcut</string>
+   </property>
+   <property name="shortcut">
+    <string>Del</string>
    </property>
   </action>
   <action name="actionPlay">
@@ -110,6 +132,16 @@
    </property>
    <property name="shortcut">
     <string>Esc</string>
+   </property>
+  </action>
+  <action name="actionAdd_shortcut_to_stop">
+   <property name="text">
+    <string>Add shortcut to stop</string>
+   </property>
+  </action>
+  <action name="actionHow_to_use">
+   <property name="text">
+    <string>How to use</string>
    </property>
   </action>
  </widget>

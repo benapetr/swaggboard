@@ -15,18 +15,23 @@
 
 #include <QFrame>
 
-namespace Ui {
+namespace Ui
+{
     class MusicFinder;
 }
+
+class ShortcutHelper;
 
 class MusicFinder : public QFrame
 {
         Q_OBJECT
     public:
-        explicit MusicFinder(QWidget *parent = 0);
+        explicit MusicFinder(QWidget *parent, ShortcutHelper *hx);
         ~MusicFinder();
         void SetFile(QString path);
         QString RetrievePath();
+        void Stop();
+        ShortcutHelper *helper;
 
     private slots:
         void on_pushSelect_clicked();
