@@ -208,6 +208,8 @@ ShortcutHelper::~ShortcutHelper()
 void ShortcutHelper::Register()
 {
     this->Parse();
+    if (this->keys == "None")
+        return;
     if (!this->is_valid)
     {
         Warn("Shortcut " + this->keys + " is not a valid shortcut and will not be used, example of good shortcut:\nctrl + x");
