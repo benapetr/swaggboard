@@ -16,6 +16,8 @@
 #include <QtXml>
 #include <QFileDialog>
 #include <QSlider>
+#include <QLayoutItem>
+#include <QTableWidget>
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QFile>
@@ -30,6 +32,7 @@ static Phonon::MediaObject *mp3 = NULL;
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include "shortcuthelper.hpp"
+#include "items.hpp"
 #include "information.hpp"
 #include "musicfinder.hpp"
 #include "options.hpp"
@@ -71,26 +74,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 {
     this->ui->setupUi(this);
     mw = this;
-    QStringList header;
-    header << "Shortcut" << "Sound" << "Loop" << "Volume";
-    this->ui->tableWidget->setColumnCount(4);
-    this->ui->tableWidget->setHorizontalHeaderLabels(header);
-    this->ui->tableWidget->verticalHeader()->setVisible(false);
-    this->ui->tableWidget->horizontalHeader()->setSelectionBehavior(QAbstractItemView::SelectRows);
-    this->ui->tableWidget->setShowGrid(false);
-    this->ui->tableWidget->setColumnWidth(0, 80);
-    this->ui->tableWidget->setColumnWidth(1, 200);
-    this->ui->tableWidget->setColumnWidth(2, 60);
-    this->ui->tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-    this->ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    this->values = new Items(this);
+    this->setCentralWidget(this->values);
     if (!QDir().exists(this->GetConfig()))
         QDir().mkpath(this->GetConfig());
     this->Load(this->GetConfig() + "/default.xml");
-    this->on_horizontalSlider_sliderMoved(100);
 }
 
 MainWindow::~MainWindow()
 {
+    delete this->values;
     delete this->ui;
 }
 
@@ -113,8 +106,8 @@ void MainWindow::Load(QString path)
         delete this->SL.at(0);
         this->SL.removeAt(0);
     }
-    while (this->ui->tableWidget->rowCount() > 0)
-        this->ui->tableWidget->removeRow(0);
+    while (this->values->GetWidget()->rowCount() > 0)
+        this->values->GetWidget()->removeRow(0);
     while (this->Finders.count())
     {
         delete this->Finders.at(0);
@@ -154,15 +147,15 @@ void MainWindow::Load(QString path)
         helper->RegisterKeys(e.attribute("shortcut"));
         helper->file = e.attribute("fp");
         this->SL.append(helper);
-        int id = this->ui->tableWidget->rowCount();
-        this->ui->tableWidget->insertRow(id);
+        int id = this->values->GetWidget()->rowCount();
+        this->values->GetWidget()->insertRow(id);
         QTableWidgetItem *keys = new QTableWidgetItem("No");
         keys->setFlags(keys->flags() ^Qt::ItemIsEditable);
-        this->ui->tableWidget->setItem(id, 0, new QTableWidgetItem(helper->GetKeys()));
+        this->values->GetWidget()->setItem(id, 0, new QTableWidgetItem(helper->GetKeys()));
         MusicFinder *x = new MusicFinder(this, helper);
         this->Finders.append(x);
-        this->ui->tableWidget->setCellWidget(id, 1, x);
-        this->ui->tableWidget->setItem(id, 2, keys);
+        this->values->GetWidget()->setCellWidget(id, 1, x);
+        this->values->GetWidget()->setItem(id, 2, keys);
         x->SetFile(helper->file);
         QSlider *s = MakeSlider(this);
         this->Sliders.append(s);
@@ -175,8 +168,8 @@ void MainWindow::Load(QString path)
         {
             s->setValue(e.attribute("volume").toInt() + 100);
         }
-        this->ui->tableWidget->setCellWidget(id, 3, s);
-        this->ui->tableWidget->resizeRowsToContents();
+        this->values->GetWidget()->setCellWidget(id, 3, s);
+        this->values->GetWidget()->resizeRowsToContents();
     }
 }
 
@@ -219,27 +212,35 @@ void MainWindow::Stop()
 #endif
 }
 
-void MainWindow::Make(int type)
+MusicFinder *MainWindow::GetFinder(int i)
+{
+    if (this->Finders.count() <= i)
+        return NULL;
+    return this->Finders.at(i);
+}
+
+int MainWindow::Make(int type)
 {
     this->changed = true;
-    int id = this->ui->tableWidget->rowCount();
-    this->ui->tableWidget->insertRow(id);
+    int id = this->values->GetWidget()->rowCount();
+    this->values->GetWidget()->insertRow(id);
     QTableWidgetItem *keys = new QTableWidgetItem("No");
     ShortcutHelper *shortcut = new ShortcutHelper();
     keys->setFlags(keys->flags() ^Qt::ItemIsEditable);
-    this->ui->tableWidget->setItem(id, 0, new QTableWidgetItem("None"));
+    this->values->GetWidget()->setItem(id, 0, new QTableWidgetItem("None"));
     MusicFinder *x = new MusicFinder(this, shortcut);
     this->Finders.append(x);
-    this->ui->tableWidget->setCellWidget(id, 1, x);
-    this->ui->tableWidget->setItem(id, 2, keys);
-    this->ui->tableWidget->resizeRowsToContents();
+    this->values->GetWidget()->setCellWidget(id, 1, x);
+    this->values->GetWidget()->setItem(id, 2, keys);
+    this->values->GetWidget()->resizeRowsToContents();
     QSlider *s = MakeSlider(this);
     this->Sliders.append(s);
     s->setValue(100);
-    this->ui->tableWidget->setCellWidget(id, 3, s);
+    this->values->GetWidget()->setCellWidget(id, 3, s);
     this->SL.append(shortcut);
     if (type == 0)
         x->Stop();
+    return id;
 }
 
 static void Error(QString reason)
@@ -347,8 +348,12 @@ static void SetOutputs(wchar_t *path)
 void MainWindow::Volume(int volume)
 {
     if (volume == -1)
-        volume = this->ui->horizontalSlider->value();
+        volume = this->values->GetVolumeBar()->value();
     volume += this->VolumeOffset / 2;
+#if QT_VERSION >= 0x050000
+    if (player)
+        player->setVolume(volume);
+#endif
 #ifdef WIN
     if (volume > 100)
         volume = 100;
@@ -465,11 +470,11 @@ void MainWindow::on_actionAdd_shortcut_triggered()
 void MainWindow::on_actionRemove_shortcut_triggered()
 {
     this->changed = true;
-    int id = this->ui->tableWidget->currentIndex().row();
+    int id = this->values->GetWidget()->currentIndex().row();
     if (id < 0 || id > this->SL.count()-1)
         return;
 
-    this->ui->tableWidget->removeRow(id);
+    this->values->GetWidget()->removeRow(id);
     delete this->SL.at(id);
     this->SL.removeAt(id);
     delete this->Finders.at(id);
@@ -478,14 +483,14 @@ void MainWindow::on_actionRemove_shortcut_triggered()
 
 void MainWindow::on_actionPlay_triggered()
 {
-    int index = this->ui->tableWidget->currentIndex().row();
+    int index = this->values->GetWidget()->currentIndex().row();
     if (index >= this->SL.count() || index < 0)
         return;
 
-    QString path = ((MusicFinder*)this->ui->tableWidget->cellWidget(index, 1))->RetrievePath();
+    QString path = ((MusicFinder*)this->values->GetWidget()->cellWidget(index, 1))->RetrievePath();
     if (path.isEmpty())
         return;
-    this->PlaySound(path, ((QSlider*)this->ui->tableWidget->cellWidget(index, 3))->value() - 100);
+    this->PlaySound(path, ((QSlider*)this->values->GetWidget()->cellWidget(index, 3))->value() - 100);
 }
 
 void MainWindow::on_actionStop_playing_triggered()
@@ -521,28 +526,10 @@ void MainWindow::OnVolume(int position)
     this->SL.at(this->Sliders.indexOf(x))->offset = position - 100;
 }
 
-void MainWindow::on_tableWidget_cellChanged(int row, int column)
-{
-    this->changed = true;
-    if (column != 0)
-        return;
-    if (this->SL.count() <= row)
-        return;
-    this->SL.at(row)->RegisterKeys(this->ui->tableWidget->item(row, column)->text());
-}
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     this->Shutdown();
     event->ignore();
-}
-
-void MainWindow::on_horizontalSlider_sliderMoved(int position)
-{
-    this->Volume(position);
-    if (player)
-        player->setVolume(position);
-    this->ui->horizontalSlider->setToolTip("VOLUME IS " + QString::number(position) + "% RIGHT NOW");
 }
 
 void MainWindow::on_actionAdd_shortcut_to_stop_triggered()
@@ -559,8 +546,7 @@ void MainWindow::on_actionHow_to_use_triggered()
 
 void MainWindow::on_actionSave_as_triggered()
 {
-    QString xx = QFileDialog::getSaveFileName(this, tr("Save File"),
-                               "", tr("Xml (*.xml)"));
+    QString xx = QFileDialog::getSaveFileName(this, tr("Save File"), "", tr("Xml (*.xml)"));
 
     if (xx.isEmpty())
         return;

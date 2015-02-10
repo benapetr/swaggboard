@@ -30,11 +30,9 @@ void MusicFinder::SetFile(QString path)
 {
     this->ui->lineEdit->setText(path);
     this->file = path;
-    if (path == "stop")
-    {
-        this->helper->file = path;
+    this->helper->file = path;
+    if (path == "stop")      
         this->ui->pushSelect->setEnabled(false);
-    }
 }
 
 QString MusicFinder::RetrievePath()

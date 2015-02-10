@@ -17,17 +17,20 @@ SOURCES += main.cpp\
     shortcuthelper.cpp \
     musicfinder.cpp \
     information.cpp \
-    options.cpp
+    options.cpp \
+    items.cpp
 
 HEADERS  += mainwindow.hpp \
     shortcuthelper.hpp \
     musicfinder.hpp \
     information.hpp \
-    options.hpp
+    options.hpp \
+    items.hpp
 
 FORMS    += mainwindow.ui \
     musicfinder.ui \
     information.ui \
-    options.ui
+    options.ui \
+    items.ui
 
-LIBS += -ldsound -lole32
+#LIBS += -ldsound -lole32
