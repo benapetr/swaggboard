@@ -166,6 +166,7 @@ void MainWindow::Load(QString path)
         }
         else
         {
+            helper->offset = e.attribute("volume").toInt();
             s->setValue(e.attribute("volume").toInt() + 100);
         }
         this->values->GetWidget()->setCellWidget(id, 3, s);
