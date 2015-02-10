@@ -286,6 +286,10 @@ static void PlayWin(IBaseFilter *device, wchar_t *path)
         // Run the graph.
         hr = x->pControl->Run();
     }
+    else
+    {
+        Error("Unable to play: " + QString::fromWCharArray(path));
+    }
 }
 
 static void SetOutputs(wchar_t *path)
@@ -568,7 +572,7 @@ void MainWindow::on_actionKeys_triggered()
     QMessageBox *m = new QMessageBox();
     m->setWindowTitle("Keys");
     m->setText("f1 - f12\n"\
-                      "esc space page-up page-down home end left up right down"\
+                      "esc space page-up page-down home end left up right down\n"\
                       "numerical keys: num0 - num9\n\n"\
                       "If you are missing any key please request it on https://github.com/benapetr/swaggboard");
     m->exec();
