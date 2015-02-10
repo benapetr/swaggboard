@@ -1,1 +1,32 @@
 Simple soundboard app for windows and linux
+
+How it works
+===============
+
+You can use this application to bind various sounds to your keyboard and play them
+with it, for example while you are in game etc, to entertain others.
+
+This program doesn't work for this purpose itself, you also need to install
+virtual sound cable, you can get one
+free here: http://vb-audio.pagesperso-orange.fr/Cable/index.htm
+
+How to set things up
+======================
+
+Install the virtual cable 2 new devices will appear in your sound
+control panels. One is used as a playback device, which is directly
+connected into the recording device. That means everything you play
+using that device will be streamed into that virtual microphone.
+
+Set that virtual cable as a default recording device.
+
+Now run swaggboard and open preferences, there you should check the
+virtual cable as output device as well as your regular speakers
+so that you can hear what you play. Put some sounds in there and try
+to play them. They will be streamed out using virtual cable input
+so that when you open some program that is recording sounds (team speak,
+game, etc) everyone there should hear sounds that you are playing
+through swaggboard.
+
+That's all folks
+
