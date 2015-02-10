@@ -46,7 +46,7 @@ int winmain(int argc, char *argv[])
             {
                 if (s->id == msg.wParam)
                 {
-                    w.PlaySound(s->file);
+                    w.PlaySound(s->file, s->offset);
                 }
             }
         }

@@ -29,6 +29,7 @@ class ShortcutHelper
         void RegisterKeys(QString key);
         QString GetKeys() {    return this->keys;    }
         unsigned int id;
+        int offset;
         QString file;
     private:
         void Parse();

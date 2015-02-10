@@ -15,6 +15,7 @@
 #include <QDir>
 #include <QtXml>
 #include <QFileDialog>
+#include <QSlider>
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QFile>
@@ -55,14 +56,24 @@ static MainWindow *mw;
     #undef PlaySound
 #endif
 
+static QSlider *MakeSlider(QObject *t)
+{
+    QSlider *x = new QSlider();
+    x->setMaximum(200);
+    QObject::connect(x, SIGNAL(sliderMoved(int)), t, SLOT(OnVolume(int)));
+    x->setToolTip("Boost of volume, by default 0 (in middle) can be -100 to 100. This value will be added to default volume.");
+    x->setOrientation(Qt::Horizontal);
+    return x;
+}
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     this->ui->setupUi(this);
     mw = this;
     QStringList header;
-    header << "Shortcut" << "Sound" << "Loop";
-    this->ui->tableWidget->setColumnCount(3);
+    header << "Shortcut" << "Sound" << "Loop" << "Volume";
+    this->ui->tableWidget->setColumnCount(4);
     this->ui->tableWidget->setHorizontalHeaderLabels(header);
     this->ui->tableWidget->verticalHeader()->setVisible(false);
     this->ui->tableWidget->horizontalHeader()->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -111,6 +122,11 @@ void MainWindow::Load(QString path)
         this->Finders.removeAt(0);
     }
     this->File = path;
+    while (this->Sliders.count())
+    {
+        delete this->Sliders.at(0);
+        this->Sliders.removeAt(0);
+    }
     this->setWindowTitle(path);
     if (!QFile().exists(path))
         return;
@@ -148,6 +164,18 @@ void MainWindow::Load(QString path)
         this->ui->tableWidget->setCellWidget(id, 1, x);
         this->ui->tableWidget->setItem(id, 2, keys);
         x->SetFile(helper->file);
+        QSlider *s = MakeSlider(this);
+        this->Sliders.append(s);
+        if (!e.attributes().contains("volume"))
+        {
+            // default
+            s->setValue(100);
+        }
+        else
+        {
+            s->setValue(e.attribute("volume").toInt() + 100);
+        }
+        this->ui->tableWidget->setCellWidget(id, 3, s);
         this->ui->tableWidget->resizeRowsToContents();
     }
 }
@@ -205,6 +233,10 @@ void MainWindow::Make(int type)
     this->ui->tableWidget->setCellWidget(id, 1, x);
     this->ui->tableWidget->setItem(id, 2, keys);
     this->ui->tableWidget->resizeRowsToContents();
+    QSlider *s = MakeSlider(this);
+    this->Sliders.append(s);
+    s->setValue(100);
+    this->ui->tableWidget->setCellWidget(id, 3, s);
     this->SL.append(shortcut);
     if (type == 0)
         x->Stop();
@@ -316,6 +348,7 @@ void MainWindow::Volume(int volume)
 {
     if (volume == -1)
         volume = this->ui->horizontalSlider->value();
+    volume += this->VolumeOffset / 2;
 #ifdef WIN
     if (volume > 100)
         volume = 100;
@@ -329,11 +362,17 @@ void MainWindow::Volume(int volume)
 #endif
 }
 
-void MainWindow::PlaySound(QString path)
+void MainWindow::SetOffset(int volume)
+{
+    this->VolumeOffset = volume;
+}
+
+void MainWindow::PlaySound(QString path, int offset)
 {
     this->Stop();
     if (path == "stop")
         return;
+    this->SetOffset(offset);
 #if QT_VERSION >= 0x050000
 #ifdef WIN
     wchar_t *file_path = new wchar_t[path.length() + 1];
@@ -394,6 +433,7 @@ void MainWindow::Save()
         writer->writeStartElement("item");
         writer->writeAttribute("shortcut", xx->GetKeys());
         writer->writeAttribute("fp", xx->file);
+        writer->writeAttribute("volume", QString::number(xx->offset));
         writer->writeEndElement();
     }
 
@@ -445,7 +485,7 @@ void MainWindow::on_actionPlay_triggered()
     QString path = ((MusicFinder*)this->ui->tableWidget->cellWidget(index, 1))->RetrievePath();
     if (path.isEmpty())
         return;
-    this->PlaySound(path);
+    this->PlaySound(path, ((QSlider*)this->ui->tableWidget->cellWidget(index, 3))->value() - 100);
 }
 
 void MainWindow::on_actionStop_playing_triggered()
@@ -471,6 +511,14 @@ void MainWindow::on_actionLoad_triggered()
         return;
 
     this->Load(f.at(0));
+}
+
+void MainWindow::OnVolume(int position)
+{
+    QSlider *x = (QSlider*)QObject::sender();
+    if (!this->Sliders.contains(x))
+        return;
+    this->SL.at(this->Sliders.indexOf(x))->offset = position - 100;
 }
 
 void MainWindow::on_tableWidget_cellChanged(int row, int column)
@@ -533,10 +581,11 @@ void MainWindow::on_actionKeys_triggered()
 {
     QMessageBox *m = new QMessageBox();
     m->setWindowTitle("Keys");
-    m->setWindowTitle("f1 - f12\n"\
+    m->setText("f1 - f12\n"\
                       "esc space page-up page-down home end left up right down"\
                       "numerical keys: num0 - num9\n\n"\
                       "If you are missing any key please request it on https://github.com/benapetr/swaggboard");
     m->exec();
     delete m;
 }
+

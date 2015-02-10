@@ -26,6 +26,7 @@ namespace Ui
 }
 
 class MusicFinder;
+class QSlider;
 class ShortcutHelper;
 
 class MainWindow : public QMainWindow
@@ -39,9 +40,10 @@ class MainWindow : public QMainWindow
         void Load(QString path);
         void Stop();
         void Make(int type);
-        void PlaySound(QString path);
+        void PlaySound(QString path, int offset);
         void Save();
         void Volume(int volume);
+        void SetOffset(int volume);
         QString GetConfig();
         QString File;
         bool changed;
@@ -55,6 +57,7 @@ class MainWindow : public QMainWindow
         void on_actionStop_playing_triggered();
         void on_actionSave_triggered();
         void on_actionLoad_triggered();
+        void OnVolume(int position);
         void on_tableWidget_cellChanged(int row, int column);
         void closeEvent(QCloseEvent *event);
         void on_horizontalSlider_sliderMoved(int position);
@@ -62,11 +65,12 @@ class MainWindow : public QMainWindow
         void on_actionHow_to_use_triggered();
         void on_actionSave_as_triggered();
         void on_actionPreferences_triggered();
-
         void on_actionKeys_triggered();
 
     private:
         QList<MusicFinder*> Finders;
+        QList<QSlider*> Sliders;
+        int VolumeOffset;
         Ui::MainWindow *ui;
 };
 

@@ -255,6 +255,7 @@ ShortcutHelper::ShortcutHelper()
     this->id = LastID++;
     this->is_parsed = false;
     this->is_valid = false;
+    this->offset = 0;
     this->is_registered = false;
     this->internal_key = '\0';
     this->keys = "None";
