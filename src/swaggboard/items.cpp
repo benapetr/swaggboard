@@ -38,7 +38,7 @@ Items::Items(QWidget *parent) : QFrame(parent), ui(new Ui::Items)
     this->ui->tableWidget->setColumnWidth(0, 80);
     this->ui->tableWidget->setColumnWidth(1, 200);
     this->ui->tableWidget->setColumnWidth(2, 60);
-    this->on_horizontalSlider_sliderMoved(100);
+    this->on_horizontalSlider_valueChanged(100);
     this->ui->tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     this->ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 }
@@ -118,9 +118,8 @@ void Items::on_tableWidget_cellChanged(int row, int column)
     this->mw->SL.at(row)->RegisterKeys(this->GetWidget()->item(row, column)->text());
 }
 
-void Items::on_horizontalSlider_sliderMoved(int position)
+void Items::on_horizontalSlider_valueChanged(int value)
 {
-    this->mw->Volume(position);
-    this->GetVolumeBar()->setToolTip("VOLUME IS " + QString::number(position) + "% RIGHT NOW");
+    this->mw->Volume(value);
+    this->GetVolumeBar()->setToolTip("VOLUME IS " + QString::number(value) + "% RIGHT NOW");
 }
-

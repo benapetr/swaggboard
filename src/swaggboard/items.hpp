@@ -41,7 +41,7 @@ class Items : public QFrame
          void dropEvent(QDropEvent *event);
     private slots:
         void on_tableWidget_cellChanged(int row, int column);
-        void on_horizontalSlider_sliderMoved(int position);
+        void on_horizontalSlider_valueChanged(int value);
     private:
         MainWindow *mw;
         Ui::Items *ui;
