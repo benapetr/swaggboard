@@ -19,12 +19,11 @@
 #include <QMessageBox>
 #include <QFile>
 #if QT_VERSION >= 0x050000
-#include <QMediaPlayer>
-#include <QMediaService>
-#include <QAudioOutputSelectorControl>
+    #include <QMediaPlayer>
+    #include <QMediaService>
 static QMediaPlayer *player = NULL;
 #else
-#include <phonon/mediaobject.h>
+    #include <phonon/mediaobject.h>
 static Phonon::MediaObject *mp3 = NULL;
 #endif
 #include "mainwindow.hpp"
@@ -67,7 +66,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     this->ui->tableWidget->setHorizontalHeaderLabels(header);
     this->ui->tableWidget->verticalHeader()->setVisible(false);
     this->ui->tableWidget->horizontalHeader()->setSelectionBehavior(QAbstractItemView::SelectRows);
-    //this->ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     this->ui->tableWidget->setShowGrid(false);
     this->ui->tableWidget->setColumnWidth(0, 80);
     this->ui->tableWidget->setColumnWidth(1, 200);
@@ -154,36 +152,18 @@ void MainWindow::Load(QString path)
     }
 }
 
+#define RELEASEWIN32(x) if (x) { x->Release(); x = NULL; }
+
 void MainWindow::Stop()
 {
 #ifdef WIN
     foreach(Playback *p, HL)
     {
-        if (p->pEvent)
-        {
-            p->pEvent->Release();
-            p->pEvent = NULL;
-        }
-        if (p->pControl)
-        {
-            p->pControl->Release();
-            p->pControl = NULL;
-        }
-        if (p->pFlx)
-        {
-            p->pFlx->Release();
-            p->pFlx = NULL;
-        }
-        if (p->pOutput)
-        {
-            p->pOutput->Release();
-            p->pOutput = NULL;
-        }
-        if (p->pGraph)
-        {
-            p->pGraph->Release();
-            p->pGraph = NULL;
-        }
+        RELEASEWIN32(p->pEvent)
+        RELEASEWIN32(p->pControl)
+        RELEASEWIN32(p->pFlx)
+        RELEASEWIN32(p->pOutput)
+        RELEASEWIN32(p->pGraph)
     }
     while (HL.count() >= 1)
     {
@@ -192,7 +172,7 @@ void MainWindow::Stop()
     }
     CoUninitialize();
     return;
-#endif
+#else
 #if QT_VERSION >= 0x050000
     if (player)
     {
@@ -207,6 +187,7 @@ void MainWindow::Stop()
         mp3->deleteLater();
     }
     mp3 = NULL;
+#endif
 #endif
 }
 
@@ -259,8 +240,6 @@ static void PlayWin(IBaseFilter *device, wchar_t *path)
         return;
     }
 
-    mw->Volume(-1);
-
     x->pFlx = device;
     if (device)
         x->pGraph->AddFilter(device, L"fd");
@@ -288,6 +267,7 @@ static void SetOutputs(wchar_t *path)
     hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void **)&pSysDevEnum);
     if (FAILED(hr))
     {
+        Error("Failed SystemDeviceEnum");
         return;
     }
 
@@ -300,7 +280,6 @@ static void SetOutputs(wchar_t *path)
         // Enumerate the monikers.
         IMoniker *pMoniker = NULL;
         ULONG cFetched;
-        int id;
         int i = 0;
         while (pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK)
         {
@@ -308,7 +287,7 @@ static void SetOutputs(wchar_t *path)
             hr = pMoniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&pPropBag);
             if (SUCCEEDED(hr))
             {
-                // To retrieve the filter's friendly name, do the following:
+                // retrieve the filter's friendly name now
                 VARIANT varName;
                 VariantInit(&varName);
                 hr = pPropBag->Read(L"FriendlyName", &varName, 0);
@@ -322,8 +301,6 @@ static void SetOutputs(wchar_t *path)
                     }
                 }
                 VariantClear(&varName);
-                // Now add the filter to the graph. 
-                //Remember to release pFilter later.
                 pPropBag->Release();
             }
             pMoniker->Release();
@@ -372,19 +349,20 @@ void MainWindow::PlaySound(QString path)
     }
 
     SetOutputs(file_path);
+    mw->Volume(-1);
 
     delete[] file_path;
 #else
     player = new QMediaPlayer();
-    //QMediaService *svc = player->service();
-    //QAudioOutputSelectorControl *out = qobject_cast<QAudioOutputSelectorControl *> (svc->requestControl(QAudioOutputSelectorControl_iid));
-    //out->setActiveOutput(this->ui->comboBox->currentText());
-    //QStringList items = out->availableOutputs();
+    QMediaService *svc = player->service();
+    QAudioOutputSelectorControl *out = qobject_cast<QAudioOutputSelectorControl *> (svc->requestControl(QAudioOutputSelectorControl_iid));
+    out->setActiveOutput(this->ui->comboBox->currentText());
+    QStringList items = out->availableOutputs();
 
-    //svc->releaseControl(out);
-    //player->setVolume(this->ui->horizontalSlider->value());
-    //player->setMedia(QUrl::fromLocalFile(path));
-    //player->play();
+    svc->releaseControl(out);
+    player->setVolume(this->ui->horizontalSlider->value());
+    player->setMedia(QUrl::fromLocalFile(path));
+    player->play();
 #endif
 #else
     mp3 = Phonon::createPlayer(Phonon::MusicCategory, Phonon::MediaSource(path));
@@ -549,4 +527,16 @@ void MainWindow::on_actionPreferences_triggered()
     Options *wx = new Options();
     wx->setAttribute(Qt::WA_DeleteOnClose);
     wx->show();
+}
+
+void MainWindow::on_actionKeys_triggered()
+{
+    QMessageBox *m = new QMessageBox();
+    m->setWindowTitle("Keys");
+    m->setWindowTitle("f1 - f12\n"\
+                      "esc space page-up page-down home end left up right down"\
+                      "numerical keys: num0 - num9\n\n"\
+                      "If you are missing any key please request it on https://github.com/benapetr/swaggboard");
+    m->exec();
+    delete m;
 }

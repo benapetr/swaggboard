@@ -10,12 +10,11 @@
 
 #include "information.hpp"
 #include "ui_information.h"
+#include <QDesktopServices>
 
-Information::Information(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::Information)
+Information::Information(QWidget *parent) : QDialog(parent), ui(new Ui::Information)
 {
-    ui->setupUi(this);
+    this->ui->setupUi(this);
 }
 
 Information::~Information()

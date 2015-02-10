@@ -50,10 +50,12 @@ void MusicFinder::Stop()
 void MusicFinder::on_pushSelect_clicked()
 {
     QFileDialog fd(this);
-    //fd->setAttribute(Qt::WA_DeleteOnClose);
-    //fd->exec();
     QStringList fltr;
+#ifdef WIN
+    fltr << "Music files (*.mp3 *.wav *.aiff *.wma *.midi)"
+#else
     fltr << "Music files (*.mp3 *.wav)"
+#endif
          << "Any files (*)";
     fd.setNameFilters(fltr);
     fd.exec();

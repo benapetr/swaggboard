@@ -42,10 +42,9 @@ class Options : public QDialog
         Q_OBJECT
     public:
         static void Initialize();
-#if QT_VERSION >= 0x050000
         static QList<OutputDevice> devices;
         static bool nodevices;
-#endif
+
         explicit Options(QWidget *parent = 0);
         ~Options();
         QList<QCheckBox*> bl;

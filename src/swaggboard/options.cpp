@@ -67,7 +67,6 @@ void Options::Initialize()
         // Enumerate the monikers.
         IMoniker *pMoniker = NULL;
         ULONG cFetched;
-        int id;
         while (pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK)
         {
             IPropertyBag *pPropBag;

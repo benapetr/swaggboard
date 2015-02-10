@@ -63,6 +63,8 @@ class MainWindow : public QMainWindow
         void on_actionSave_as_triggered();
         void on_actionPreferences_triggered();
 
+        void on_actionKeys_triggered();
+
     private:
         QList<MusicFinder*> Finders;
         Ui::MainWindow *ui;

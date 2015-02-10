@@ -87,6 +87,7 @@
      <string>HELP</string>
     </property>
     <addaction name="actionHow_to_use"/>
+    <addaction name="actionKeys"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuKEYBOARD"/>
@@ -154,6 +155,16 @@
   <action name="actionPreferences">
    <property name="text">
     <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionAdd_randomizer">
+   <property name="text">
+    <string>Add randomizer</string>
+   </property>
+  </action>
+  <action name="actionKeys">
+   <property name="text">
+    <string>Keylist</string>
    </property>
   </action>
  </widget>

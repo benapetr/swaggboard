@@ -184,6 +184,66 @@ static UINT virtual_key(QString vk)
     } else if (vk == "f12")
     {
         return 0x7B;
+    } else if (vk == "esc")
+    {
+        return 0x1B;
+    } else if (vk == "space")
+    {
+        return 0x20;
+    } else if (vk == "page-up")
+    {
+        return 0x21;
+    } else if (vk == "page-down")
+    {
+        return 0x22;
+    } else if (vk == "home")
+    {
+        return 0x24;
+    } else if (vk == "left")
+    {
+        return 0x25;
+    } else if (vk == "end")
+    {
+        return 0x23;
+    } else if (vk == "up")
+    {
+        return 0x26;
+    } else if (vk == "right")
+    {
+        return 0x27;
+    } else if (vk == "down")
+    {
+        return 0x28;
+    } else if (vk == "num0")
+    {
+        return 0x60;
+    } else if (vk == "num1")
+    {
+        return 0x61;
+    } else if (vk == "num2")
+    {
+        return 0x62;
+    } else if (vk == "num3")
+    {
+        return 0x63;
+    } else if (vk == "num4")
+    {
+        return 0x64;
+    } else if (vk == "num5")
+    {
+        return 0x65;
+    } else if (vk == "num6")
+    {
+        return 0x66;
+    } else if (vk == "num7")
+    {
+        return 0x67;
+    } else if (vk == "num8")
+    {
+        return 0x68;
+    } else if (vk == "num9")
+    {
+        return 0x69;
     }
     return 0;
 }
@@ -286,7 +346,14 @@ void ShortcutHelper::Parse()
         if (this->part[x].size() > 1)
         {
             if (this->part[x] != "ctrl" && this->part[x] != "win" && this->part[x] != "alt" && this->part[x] != "shift")
-                this->is_valid = false;
+            {
+#ifdef WIN
+                if (!virtual_key(this->part[x].toLower()))
+                    this->is_valid = false;
+                else
+                    this->internal_key = this->part[x];
+#endif
+            }
         } else if (this->part[x].size() == 1)
         {
             this->internal_key = this->part[x];
