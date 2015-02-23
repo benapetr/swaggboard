@@ -13,7 +13,6 @@
 #ifndef ITEMS_HPP
 #define ITEMS_HPP
 
-#include <QKeySequenceEdit>
 #include <QFrame>
 
 namespace Ui
@@ -41,7 +40,6 @@ class Items : public QFrame
         QList<ShortcutHelper*> SL;
         QTableWidget *GetWidget();
         QList<MusicFinder*> Finders;
-        QList<QKeySequenceEdit*> QKSE;
         QList<QSlider*> Sliders;
         bool Changed;
     protected:

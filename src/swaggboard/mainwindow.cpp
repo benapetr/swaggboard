@@ -432,16 +432,31 @@ void MainWindow::on_actionAdd_shortcut_triggered()
 
 void MainWindow::on_actionRemove_shortcut_triggered()
 {
-    this->Values->Changed = true;
-    int id = this->Values->GetWidget()->currentIndex().row();
-    if (id < 0 || id > this->Values->SL.count()-1)
+    QList<QTableWidgetItem*> items = this->Values->GetWidget()->selectedItems();
+    QList<int> selected_rows;
+    foreach(QTableWidgetItem *item, items)
+    {
+        if (!selected_rows.contains(item->row()))
+            selected_rows.append(item->row());
+    }
+    if (selected_rows.count() < 1)
         return;
+    // we need to delete them upside down so that we don't cut the branch we are laying on
+    qSort(selected_rows);
+    this->Values->Changed = true;
+    int row = selected_rows.count();
+    while(row > 0)
+    {
+        int id = selected_rows[--row];
+        if (id < 0 || id > this->Values->SL.count() - 1)
+            return;
 
-    this->Values->GetWidget()->removeRow(id);
-    delete this->Values->SL.at(id);
-    this->Values->SL.removeAt(id);
-    delete this->Values->Finders.at(id);
-    this->Values->Finders.removeAt(id);
+        this->Values->GetWidget()->removeRow(id);
+        delete this->Values->SL.at(id);
+        this->Values->SL.removeAt(id);
+        delete this->Values->Finders.at(id);
+        this->Values->Finders.removeAt(id);
+    }
 }
 
 void MainWindow::on_actionPlay_triggered()

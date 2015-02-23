@@ -107,8 +107,7 @@ int Items::Make(int type)
     QTableWidgetItem *keys = new QTableWidgetItem("No");
     ShortcutHelper *shortcut = new ShortcutHelper();
     keys->setFlags(keys->flags() ^ Qt::ItemIsEditable);
-    QKeySequenceEdit *ks = new QKeySequenceEdit(this);
-    this->GetWidget()->setCellWidget(id, 0, ks);
+    this->GetWidget()->setItem(id, 0, new QTableWidgetItem("None"));
     MusicFinder *x = new MusicFinder(this, shortcut);
     this->Finders.append(x);
     this->GetWidget()->setCellWidget(id, 1, x);
@@ -116,7 +115,6 @@ int Items::Make(int type)
     this->GetWidget()->resizeRowsToContents();
     QSlider *s = MainWindow::MakeSlider(this);
     this->Sliders.append(s);
-    this->QKSE.append(ks);
     s->setValue(100);
     this->GetWidget()->setCellWidget(id, 3, s);
     this->SL.append(shortcut);
