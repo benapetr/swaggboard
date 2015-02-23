@@ -30,6 +30,7 @@ Items::Items(QWidget *parent) : QFrame(parent), ui(new Ui::Items)
     this->setAcceptDrops(true);
     this->mw = (MainWindow*)parent;
     header << "Shortcut" << "Sound" << "Loop" << "Volume";
+    this->Changed = false;
     this->ui->tableWidget->setColumnCount(4);
     this->ui->tableWidget->setHorizontalHeaderLabels(header);
     this->ui->tableWidget->verticalHeader()->setVisible(false);
@@ -58,6 +59,28 @@ QTableWidget *Items::GetWidget()
     return this->ui->tableWidget;
 }
 
+void Items::Clear()
+{
+    while (this->SL.count() > 0)
+    {
+        delete this->SL.at(0);
+        this->SL.removeAt(0);
+    }
+    while (this->GetWidget()->rowCount() > 0)
+        this->GetWidget()->removeRow(0);
+    while (this->Finders.count())
+    {
+        delete this->Finders.at(0);
+        // delete it
+        this->Finders.removeAt(0);
+    }
+    while (this->Sliders.count())
+    {
+        delete this->Sliders.at(0);
+        this->Sliders.removeAt(0);
+    }
+}
+
 void Items::dragEnterEvent(QDragEnterEvent *event)
 {
     const QMimeData *xx = event->mimeData();
@@ -74,6 +97,32 @@ void Items::dragEnterEvent(QDragEnterEvent *event)
         }
         event->acceptProposedAction();
     }
+}
+
+int Items::Make(int type)
+{
+    this->Changed = true;
+    int id = this->GetWidget()->rowCount();
+    this->GetWidget()->insertRow(id);
+    QTableWidgetItem *keys = new QTableWidgetItem("No");
+    ShortcutHelper *shortcut = new ShortcutHelper();
+    keys->setFlags(keys->flags() ^ Qt::ItemIsEditable);
+    QKeySequenceEdit *ks = new QKeySequenceEdit(this);
+    this->GetWidget()->setCellWidget(id, 0, ks);
+    MusicFinder *x = new MusicFinder(this, shortcut);
+    this->Finders.append(x);
+    this->GetWidget()->setCellWidget(id, 1, x);
+    this->GetWidget()->setItem(id, 2, keys);
+    this->GetWidget()->resizeRowsToContents();
+    QSlider *s = MainWindow::MakeSlider(this);
+    this->Sliders.append(s);
+    this->QKSE.append(ks);
+    s->setValue(100);
+    this->GetWidget()->setCellWidget(id, 3, s);
+    this->SL.append(shortcut);
+    if (type == 0)
+        x->Stop();
+    return id;
 }
 
 void Items::dragMoveEvent(QDragMoveEvent *event)
@@ -99,7 +148,7 @@ void Items::dropEvent(QDropEvent *event)
                 path = path.mid(8);
             if (QFileInfo(path).isDir())
                 continue;
-            int row = this->mw->Make(SOUNDS);
+            int row = this->Make(SOUNDS);
             MusicFinder *finder = this->mw->GetFinder(row);
             if (finder)
                 finder->SetFile(path);
@@ -110,12 +159,12 @@ void Items::dropEvent(QDropEvent *event)
 
 void Items::on_tableWidget_cellChanged(int row, int column)
 {
-    this->mw->changed = true;
+    this->Changed = true;
     if (column != 0)
         return;
-    if (this->mw->SL.count() <= row)
+    if (this->SL.count() <= row)
         return;
-    this->mw->SL.at(row)->RegisterKeys(this->GetWidget()->item(row, column)->text());
+    this->SL.at(row)->RegisterKeys(this->GetWidget()->item(row, column)->text());
 }
 
 void Items::on_horizontalSlider_valueChanged(int value)

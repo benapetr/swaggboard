@@ -35,21 +35,21 @@ class MainWindow : public QMainWindow
         Q_OBJECT
 
     public:
+        static QSlider *MakeSlider(QObject *t);
+
         explicit MainWindow(QWidget *parent = 0);
         ~MainWindow();
         void Shutdown();
         void Load(QString path);
         void Stop();
-        int Make(int type);
         void PlaySound(QString path, int offset);
         void Save();
         void Volume(int volume);
         void SetOffset(int volume);
         QString GetConfig();
         MusicFinder *GetFinder(int i);
+        Items *Values;
         QString File;
-        bool changed;
-        QList<ShortcutHelper*> SL;
 
     private slots:
         void on_actionExit_triggered();
@@ -68,9 +68,6 @@ class MainWindow : public QMainWindow
         void on_actionKeys_triggered();
 
     private:
-        QList<MusicFinder*> Finders;
-        QList<QSlider*> Sliders;
-        Items *values;
         int VolumeOffset;
         Ui::MainWindow *ui;
 };

@@ -13,6 +13,7 @@
 #ifndef ITEMS_HPP
 #define ITEMS_HPP
 
+#include <QKeySequenceEdit>
 #include <QFrame>
 
 namespace Ui
@@ -23,17 +24,26 @@ namespace Ui
 class QTableWidget;
 class QSlider;
 class MainWindow;
+class MusicFinder;
+class QSlider;
+class Items;
+class ShortcutHelper;
 
 class Items : public QFrame
 {
         Q_OBJECT
-
     public:
         explicit Items(QWidget *parent = 0);
         ~Items();
+        int Make(int type);
         QSlider *GetVolumeBar();
+        void Clear();
+        QList<ShortcutHelper*> SL;
         QTableWidget *GetWidget();
-
+        QList<MusicFinder*> Finders;
+        QList<QKeySequenceEdit*> QKSE;
+        QList<QSlider*> Sliders;
+        bool Changed;
     protected:
          void dragEnterEvent(QDragEnterEvent *event);
          void dragMoveEvent(QDragMoveEvent *event);

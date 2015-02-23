@@ -14,6 +14,7 @@
 #include "mainwindow.hpp"
 #include "definitions.hpp"
 #include "shortcuthelper.hpp"
+#include "items.hpp"
 #include "options.hpp"
 
 #ifdef _MSC_VER
@@ -42,7 +43,7 @@ int winmain(int argc, char *argv[])
         DispatchMessage(&msg);
         if (msg.message == WM_HOTKEY)
         {
-            foreach (ShortcutHelper *s, w.SL)
+            foreach (ShortcutHelper *s, w.Values->SL)
             {
                 if (s->id == msg.wParam)
                 {

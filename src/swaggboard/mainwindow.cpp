@@ -59,7 +59,7 @@ static MainWindow *mw;
     #undef PlaySound
 #endif
 
-static QSlider *MakeSlider(QObject *t)
+QSlider *MainWindow::MakeSlider(QObject *t)
 {
     QSlider *x = new QSlider();
     x->setMaximum(200);
@@ -69,13 +69,12 @@ static QSlider *MakeSlider(QObject *t)
     return x;
 }
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     this->ui->setupUi(this);
     mw = this;
-    this->values = new Items(this);
-    this->setCentralWidget(this->values);
+    this->Values = new Items(this);
+    this->setCentralWidget(this->Values);
     if (!QDir().exists(this->GetConfig()))
         QDir().mkpath(this->GetConfig());
     this->Load(this->GetConfig() + "/default.xml");
@@ -83,7 +82,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
 MainWindow::~MainWindow()
 {
-    delete this->values;
+    delete this->Values;
     delete this->ui;
 }
 
@@ -100,27 +99,6 @@ void MainWindow::Shutdown()
 
 void MainWindow::Load(QString path)
 {
-    // clear all current shortcuts first
-    while (this->SL.count() > 0)
-    {
-        delete this->SL.at(0);
-        this->SL.removeAt(0);
-    }
-    while (this->values->GetWidget()->rowCount() > 0)
-        this->values->GetWidget()->removeRow(0);
-    while (this->Finders.count())
-    {
-        delete this->Finders.at(0);
-        // delete it
-        this->Finders.removeAt(0);
-    }
-    this->File = path;
-    while (this->Sliders.count())
-    {
-        delete this->Sliders.at(0);
-        this->Sliders.removeAt(0);
-    }
-    this->setWindowTitle(path);
     if (!QFile().exists(path))
         return;
 
@@ -134,7 +112,11 @@ void MainWindow::Load(QString path)
         delete msg;
     }
 
-    this->changed = false;
+    // clear all current shortcuts first
+    this->Values->Clear();
+    this->File = path;
+    this->setWindowTitle(path);
+    this->Values->Changed = false;
     QDomDocument xx;
     xx.setContent(file.readAll());
     file.close();
@@ -146,19 +128,19 @@ void MainWindow::Load(QString path)
         ShortcutHelper *helper = new ShortcutHelper();
         helper->RegisterKeys(e.attribute("shortcut"));
         helper->file = e.attribute("fp");
-        this->SL.append(helper);
-        int id = this->values->GetWidget()->rowCount();
-        this->values->GetWidget()->insertRow(id);
+        this->Values->SL.append(helper);
+        int id = this->Values->GetWidget()->rowCount();
+        this->Values->GetWidget()->insertRow(id);
         QTableWidgetItem *keys = new QTableWidgetItem("No");
         keys->setFlags(keys->flags() ^Qt::ItemIsEditable);
-        this->values->GetWidget()->setItem(id, 0, new QTableWidgetItem(helper->GetKeys()));
+        this->Values->GetWidget()->setItem(id, 0, new QTableWidgetItem(helper->GetKeys()));
         MusicFinder *x = new MusicFinder(this, helper);
-        this->Finders.append(x);
-        this->values->GetWidget()->setCellWidget(id, 1, x);
-        this->values->GetWidget()->setItem(id, 2, keys);
+        this->Values->Finders.append(x);
+        this->Values->GetWidget()->setCellWidget(id, 1, x);
+        this->Values->GetWidget()->setItem(id, 2, keys);
         x->SetFile(helper->file);
         QSlider *s = MakeSlider(this);
-        this->Sliders.append(s);
+        this->Values->Sliders.append(s);
         if (!e.attributes().contains("volume"))
         {
             // default
@@ -169,8 +151,8 @@ void MainWindow::Load(QString path)
             helper->offset = e.attribute("volume").toInt();
             s->setValue(e.attribute("volume").toInt() + 100);
         }
-        this->values->GetWidget()->setCellWidget(id, 3, s);
-        this->values->GetWidget()->resizeRowsToContents();
+        this->Values->GetWidget()->setCellWidget(id, 3, s);
+        this->Values->GetWidget()->resizeRowsToContents();
     }
 }
 
@@ -215,33 +197,9 @@ void MainWindow::Stop()
 
 MusicFinder *MainWindow::GetFinder(int i)
 {
-    if (this->Finders.count() <= i)
+    if (this->Values->Finders.count() <= i)
         return NULL;
-    return this->Finders.at(i);
-}
-
-int MainWindow::Make(int type)
-{
-    this->changed = true;
-    int id = this->values->GetWidget()->rowCount();
-    this->values->GetWidget()->insertRow(id);
-    QTableWidgetItem *keys = new QTableWidgetItem("No");
-    ShortcutHelper *shortcut = new ShortcutHelper();
-    keys->setFlags(keys->flags() ^Qt::ItemIsEditable);
-    this->values->GetWidget()->setItem(id, 0, new QTableWidgetItem("None"));
-    MusicFinder *x = new MusicFinder(this, shortcut);
-    this->Finders.append(x);
-    this->values->GetWidget()->setCellWidget(id, 1, x);
-    this->values->GetWidget()->setItem(id, 2, keys);
-    this->values->GetWidget()->resizeRowsToContents();
-    QSlider *s = MakeSlider(this);
-    this->Sliders.append(s);
-    s->setValue(100);
-    this->values->GetWidget()->setCellWidget(id, 3, s);
-    this->SL.append(shortcut);
-    if (type == 0)
-        x->Stop();
-    return id;
+    return this->Values->Finders.at(i);
 }
 
 static void Error(QString reason)
@@ -353,7 +311,7 @@ static void SetOutputs(wchar_t *path)
 void MainWindow::Volume(int volume)
 {
     if (volume == -1)
-        volume = this->values->GetVolumeBar()->value();
+        volume = this->Values->GetVolumeBar()->value();
     volume += this->VolumeOffset / 2;
 #if QT_VERSION >= 0x050000
     if (player)
@@ -438,7 +396,7 @@ void MainWindow::Save()
     writer->writeStartDocument();
     writer->writeStartElement("shortcuts");
 
-    foreach (ShortcutHelper *xx, this->SL)
+    foreach (ShortcutHelper *xx, this->Values->SL)
     {
         writer->writeStartElement("item");
         writer->writeAttribute("shortcut", xx->GetKeys());
@@ -469,33 +427,33 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionAdd_shortcut_triggered()
 {
-    this->Make(1);
+    this->Values->Make(1);
 }
 
 void MainWindow::on_actionRemove_shortcut_triggered()
 {
-    this->changed = true;
-    int id = this->values->GetWidget()->currentIndex().row();
-    if (id < 0 || id > this->SL.count()-1)
+    this->Values->Changed = true;
+    int id = this->Values->GetWidget()->currentIndex().row();
+    if (id < 0 || id > this->Values->SL.count()-1)
         return;
 
-    this->values->GetWidget()->removeRow(id);
-    delete this->SL.at(id);
-    this->SL.removeAt(id);
-    delete this->Finders.at(id);
-    this->Finders.removeAt(id);
+    this->Values->GetWidget()->removeRow(id);
+    delete this->Values->SL.at(id);
+    this->Values->SL.removeAt(id);
+    delete this->Values->Finders.at(id);
+    this->Values->Finders.removeAt(id);
 }
 
 void MainWindow::on_actionPlay_triggered()
 {
-    int index = this->values->GetWidget()->currentIndex().row();
-    if (index >= this->SL.count() || index < 0)
+    int index = this->Values->GetWidget()->currentIndex().row();
+    if (index >= this->Values->SL.count() || index < 0)
         return;
 
-    QString path = ((MusicFinder*)this->values->GetWidget()->cellWidget(index, 1))->RetrievePath();
+    QString path = ((MusicFinder*)this->Values->GetWidget()->cellWidget(index, 1))->RetrievePath();
     if (path.isEmpty())
         return;
-    this->PlaySound(path, ((QSlider*)this->values->GetWidget()->cellWidget(index, 3))->value() - 100);
+    this->PlaySound(path, ((QSlider*)this->Values->GetWidget()->cellWidget(index, 3))->value() - 100);
 }
 
 void MainWindow::on_actionStop_playing_triggered()
@@ -526,9 +484,9 @@ void MainWindow::on_actionLoad_triggered()
 void MainWindow::OnVolume(int position)
 {
     QSlider *x = (QSlider*)QObject::sender();
-    if (!this->Sliders.contains(x))
+    if (!this->Values->Sliders.contains(x))
         return;
-    this->SL.at(this->Sliders.indexOf(x))->offset = position - 100;
+    this->Values->SL.at(this->Values->Sliders.indexOf(x))->offset = position - 100;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -539,7 +497,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::on_actionAdd_shortcut_to_stop_triggered()
 {
-    this->Make(STOP);
+    this->Values->Make(STOP);
 }
 
 void MainWindow::on_actionHow_to_use_triggered()
