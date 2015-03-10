@@ -36,6 +36,7 @@ class MainWindow : public QMainWindow
 
     public:
         static QSlider *MakeSlider(QObject *t);
+        static MainWindow *mw;
 
         explicit MainWindow(QWidget *parent = 0);
         ~MainWindow();

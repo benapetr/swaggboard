@@ -51,7 +51,7 @@ class Playback
 };
 
 static QList<Playback*> HL;
-static MainWindow *mw;
+MainWindow *MainWindow::mw;
 
 #endif
 

@@ -37,8 +37,8 @@ Items::Items(QWidget *parent) : QFrame(parent), ui(new Ui::Items)
     this->ui->tableWidget->horizontalHeader()->setSelectionBehavior(QAbstractItemView::SelectRows);
     this->ui->tableWidget->setShowGrid(false);
     this->ui->tableWidget->setColumnWidth(0, 80);
-    this->ui->tableWidget->setColumnWidth(1, 200);
-    this->ui->tableWidget->setColumnWidth(2, 60);
+    this->ui->tableWidget->setColumnWidth(1, 500);
+    this->ui->tableWidget->setColumnWidth(2, 20);
     this->on_horizontalSlider_valueChanged(100);
     this->ui->tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     this->ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);

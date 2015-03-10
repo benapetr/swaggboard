@@ -10,6 +10,7 @@
 
 // Copyright (c) Petr Bena 2015
 
+#include "mainwindow.hpp"
 #include "musicfinder.hpp"
 #include "shortcuthelper.hpp"
 #include "ui_musicfinder.h"
@@ -64,4 +65,9 @@ void MusicFinder::on_pushSelect_clicked()
     file = f.at(0);
     this->helper->file = file;
     this->ui->lineEdit->setText(file);
+}
+
+void MusicFinder::on_pushButton_clicked()
+{
+    MainWindow::mw->PlaySound(this->RetrievePath(), this->helper->offset);
 }

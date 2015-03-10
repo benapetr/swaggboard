@@ -36,6 +36,8 @@ class MusicFinder : public QFrame
     private slots:
         void on_pushSelect_clicked();
 
+        void on_pushButton_clicked();
+
     private:
         QString file;
         Ui::MusicFinder *ui;
