@@ -17,6 +17,7 @@
 #include <QFileDialog>
 #include <QSlider>
 #include <QLayoutItem>
+#include <QSettings>
 #include <QTableWidget>
 #include <QCloseEvent>
 #include <QMessageBox>
@@ -77,7 +78,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     this->setCentralWidget(this->Values);
     if (!QDir().exists(this->GetConfig()))
         QDir().mkpath(this->GetConfig());
-    this->Load(this->GetConfig() + "/default.xml");
+    QSettings settings;
+    QString path = settings.value("path", QString(this->GetConfig() + "/default.xml")).toString();
+    if (!QFile().exists(path))
+    {
+        // If there is no default configuration file, we make one
+        this->File = path;
+        this->Save();
+    }
+    this->Load(path);
 }
 
 MainWindow::~MainWindow()
@@ -111,6 +120,9 @@ void MainWindow::Load(QString path)
         msg->exec();
         delete msg;
     }
+
+    QSettings settings;
+    settings.setValue("path", path);
 
     // clear all current shortcuts first
     this->Values->Clear();
@@ -389,6 +401,9 @@ void MainWindow::Save()
         delete msg;
         return;
     }
+
+    QSettings settings;
+    settings.setValue("path", this->File);
 
     QXmlStreamWriter *writer = new QXmlStreamWriter();
     writer->setDevice(&file);
