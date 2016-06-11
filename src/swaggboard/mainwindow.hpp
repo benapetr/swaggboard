@@ -20,6 +20,8 @@
 #define STOP 0
 #define SOUNDS 1
 
+#pragma comment(lib, "Strmiids.lib")
+
 namespace Ui
 {
     class MainWindow;

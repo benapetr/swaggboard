@@ -19,6 +19,8 @@
 
 #ifdef _MSC_VER
 #    pragma comment(linker, "/subsystem:windows /ENTRY:mainCRTStartup")
+#    pragma comment(lib,"Oleaut32.lib")
+#    pragma comment(lib,"user32.lib")
 #endif
 
 #ifdef WIN

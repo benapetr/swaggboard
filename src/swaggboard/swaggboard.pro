@@ -33,4 +33,4 @@ FORMS    += mainwindow.ui \
     options.ui \
     items.ui
 
-#LIBS += -ldsound -lole32
+LIBS += -ldsound -lole32

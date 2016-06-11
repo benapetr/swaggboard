@@ -288,7 +288,6 @@ static void SetOutputs(wchar_t *path)
         // Enumerate the monikers.
         IMoniker *pMoniker = NULL;
         ULONG cFetched;
-        int i = 0;
         while (pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK)
         {
             IPropertyBag *pPropBag;
